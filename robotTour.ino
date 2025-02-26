@@ -23,6 +23,7 @@
 // https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
 
 #include "Motor.h"
+#include "math.h"
 
 String inputString = "";
 bool stringComplete = false;
@@ -39,6 +40,18 @@ static const float WHEEL_RADIUS = 2;
 // encoder pin a, encoder pin b, pwm pin, direction pin, brake pin
 Motor rightMotor(5, 6, 3, 12, 9);
 Motor leftMotor(2, 10, 11, 13, 8);
+
+const float INIT_X = 0;
+float INIT_Y = 0;
+float INIT_HEADING = 0;
+
+struct pose {
+  float x;
+  float y;
+  float heading;
+};
+
+struct pose robotPose = {INIT_X, INIT_Y, INIT_HEADING};
 
 
 // from my testing, the minimum motor speed is about 80-90
@@ -68,10 +81,8 @@ void loop() {
   // }
 
 
-
   long rightMotorNewPosition = rightMotor.getPosition();
-  long numberOfRevolutions = rightMotorNewPosition/COUNTS_PER_REVOLUTION;
-  // long wheelDistanceTraveled = numberOfRevolutions * 2 * 3.14159265 * ;
+
 
   // printing encoder position
   if (rightMotorNewPosition != rightMotorOldPosition) {
@@ -86,6 +97,27 @@ void loop() {
   //   Serial.println(leftMotorNewPosition);
   // }
 }
+
+// https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
+void calculateAndUpdatePose(long leftMotorPosition, long rightMotorPosition) {
+
+    long leftNumberOfRevolutions = leftMotorPosition/COUNTS_PER_REVOLUTION;
+    long rightNumberOfRevolutions = rightMotorPosition/COUNTS_PER_REVOLUTION;
+
+    float leftDistanceTraveled = leftNumberOfRevolutions * 2 * 3.14159265 * WHEEL_RADIUS;
+    float rightDistanceTraveled = rightNumberOfRevolutions * 2 * 3.14159265 * WHEEL_RADIUS;
+
+    float averageDisplacement = (leftDistanceTraveled + rightDistanceTraveled) / 2; // cm
+    float deltaHeading = (leftDistanceTraveled - rightDistanceTraveled) / 2; // radians
+
+    float deltaX = averageDisplacement * cos(deltaHeading);
+    float deltaY = averageDisplacement * sin(deltaHeading);
+
+    robotPose.x = INIT_X + deltaX;
+    robotPose.y = INIT_Y + deltaY;
+    robotPose.heading = INIT_HEADING + deltaHeading;    
+}
+
 
 void goStraight(float velocity) {
   rightMotor.setVelocity(velocity);
