@@ -34,7 +34,11 @@ bool stringComplete = false;
 
 // encoder pin a, encoder pin b, pwm pin, direction pin, brake pin
 Motor rightMotor(5, 6, 3, 12, 9);
+// white cable on left motor broke :(
 Motor leftMotor(2, 10, 11, 13, 8);
+// Motor rightMotor(2, 10, 3, 12, 9);
+// Motor leftMotor(5, 6, 11, 13, 8);
+
 
 const float INIT_X = 0;
 const float INIT_Y = 0;
@@ -52,6 +56,8 @@ void setup() {
 
 long rightMotorOldPosition = -999;
 long leftMotorOldPosition = -999;
+long leftMotorNewPosition = robot.leftMotor.getPosition();
+long rightMotorNewPosition = robot.rightMotor.getPosition();
 
 
 
@@ -69,23 +75,36 @@ void loop() {
   //   // Serial.print("motor speed set to: ");
   //   // Serial.println(motorVelocity);
   // }
+  robot.rightMotor.setVelocity(0);
 
+  printMotorPositions();
 
-  long rightMotorNewPosition = robot.rightMotor.getPosition();
-
-
-  // printing encoder position
-  if (rightMotorNewPosition != rightMotorOldPosition) {
-    rightMotorOldPosition = rightMotorNewPosition;
-    Serial.println("right motor position: ");
-    Serial.println(rightMotorNewPosition);
-  }
   // long leftMotorNewPosition = leftMotor.getPosition();
   // if (leftMotorNewPosition != leftMotorOldPosition) {
   //   leftMotorOldPosition = leftMotorNewPosition;
   //   Serial.println("left motor position: ");
   //   Serial.println(leftMotorNewPosition);
   // }
+}
+
+void printMotorPositions() {
+
+  leftMotorNewPosition = robot.leftMotor.getPosition();
+  rightMotorNewPosition = robot.rightMotor.getPosition();
+
+  // printing encoder position
+  if (rightMotorNewPosition != rightMotorOldPosition
+   || leftMotorNewPosition != leftMotorOldPosition) {
+
+    rightMotorOldPosition = rightMotorNewPosition;
+    leftMotorOldPosition = leftMotorNewPosition;
+    Serial.print("right:");
+    Serial.print(rightMotorNewPosition);
+    Serial.print(",");
+    Serial.print("left:");
+    Serial.println(leftMotorNewPosition);
+
+  }
 }
 
 // Serial event handler
