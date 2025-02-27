@@ -23,16 +23,11 @@
 // https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
 
 #include "Motor.h"
+#include "Robot.h"
 #include "math.h"
 
 String inputString = "";
 bool stringComplete = false;
-float motorVelocity = 0;
-
-// counts for revolution for the encoder
-static const int COUNTS_PER_REVOLUTION = 12*50; // CPR * gear ratio
-// wheel radius in cm
-static const float WHEEL_RADIUS = 2;
 
 // needs to be pins with interrupts, so pins 2 (digital) and 3 (analog) ?
 // setting this to 2 and 3 only allows 1, 0, -1 input
@@ -42,16 +37,10 @@ Motor rightMotor(5, 6, 3, 12, 9);
 Motor leftMotor(2, 10, 11, 13, 8);
 
 const float INIT_X = 0;
-float INIT_Y = 0;
-float INIT_HEADING = 0;
+const float INIT_Y = 0;
+const float INIT_HEADING = 0;
 
-struct pose {
-  float x;
-  float y;
-  float heading;
-};
-
-struct pose robotPose = {INIT_X, INIT_Y, INIT_HEADING};
+Robot robot(leftMotor, rightMotor, INIT_X, INIT_Y, INIT_HEADING);
 
 
 // from my testing, the minimum motor speed is about 80-90
@@ -67,6 +56,7 @@ long leftMotorOldPosition = -999;
 
 
 void loop() {
+  robot.calculateAndUpdatePose();
 
   // if (stringComplete) {
   //   // Serial.println("string: " + inputString);
@@ -81,7 +71,7 @@ void loop() {
   // }
 
 
-  long rightMotorNewPosition = rightMotor.getPosition();
+  long rightMotorNewPosition = robot.rightMotor.getPosition();
 
 
   // printing encoder position
@@ -96,37 +86,6 @@ void loop() {
   //   Serial.println("left motor position: ");
   //   Serial.println(leftMotorNewPosition);
   // }
-}
-
-// https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
-void calculateAndUpdatePose(long leftMotorPosition, long rightMotorPosition) {
-
-    long leftNumberOfRevolutions = leftMotorPosition/COUNTS_PER_REVOLUTION;
-    long rightNumberOfRevolutions = rightMotorPosition/COUNTS_PER_REVOLUTION;
-
-    float leftDistanceTraveled = leftNumberOfRevolutions * 2 * 3.14159265 * WHEEL_RADIUS;
-    float rightDistanceTraveled = rightNumberOfRevolutions * 2 * 3.14159265 * WHEEL_RADIUS;
-
-    float averageDisplacement = (leftDistanceTraveled + rightDistanceTraveled) / 2; // cm
-    float deltaHeading = (leftDistanceTraveled - rightDistanceTraveled) / 2; // radians
-
-    float deltaX = averageDisplacement * cos(deltaHeading);
-    float deltaY = averageDisplacement * sin(deltaHeading);
-
-    robotPose.x = INIT_X + deltaX;
-    robotPose.y = INIT_Y + deltaY;
-    robotPose.heading = INIT_HEADING + deltaHeading;    
-}
-
-
-void goStraight(float velocity) {
-  rightMotor.setVelocity(velocity);
-  leftMotor.setVelocity(-velocity);
-}
-
-void turn(float strength) {
-  rightMotor.setVelocity(strength);
-  leftMotor.setVelocity(strength);
 }
 
 // Serial event handler

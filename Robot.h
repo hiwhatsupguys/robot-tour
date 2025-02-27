@@ -3,22 +3,28 @@
 
 class Robot {
 public:
-  Robot(Motor leftMotor, Motor rightMotor);
+  Robot(Motor leftMotor, Motor rightMotor, float initX, float initY, float initHeading);
   float getX();
   float getY();
   float getHeading();
-  float turnDegrees(float degrees);
-  float getSpeed();
-  void setSpeed(float speed);
-  void goTo(float x, float y, float heading);
-  void goTo(float x, float y);
+  void turn(float degrees);
+  void forward(float speed);
+  void calculateAndUpdatePose();
+  Motor rightMotor;
+  Motor leftMotor;
 
 
 private:
-  Motor rightMotor;
-  Motor leftMotor;
+  // counts for revolution for the encoder
+  static const int COUNTS_PER_REVOLUTION = 12*50; // CPR * gear ratio
+  // wheel radius in cm
+  static const float WHEEL_RADIUS = 2;
   float x;
   float y;
   float heading;
-  float speed;
+
+  float initX;
+  float initY;
+  float initHeading;
+
 };
