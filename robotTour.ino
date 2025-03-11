@@ -33,24 +33,20 @@ bool stringComplete = false;
 // setting this to 2 and 3 only allows 1, 0, -1 input
 
 // encoder pin a, encoder pin b, pwm pin, direction pin, brake pin
-Motor rightMotor(5, 6, 3, 12, 9, false);
+Motor leftMotor(2, 6, 3, 12, 9);
 // white cable on left motor broke :(
-Motor leftMotor(2, 10, 11, 13, 8, true); 
+Motor rightMotor(5, 10, 11, 13, 8); 
 
-
-
-const float INIT_X = 0;
-const float INIT_Y = 0;
-const float INIT_HEADING = 0;
-
-Robot robot(leftMotor, rightMotor, INIT_X, INIT_Y, INIT_HEADING);
+Robot robot(leftMotor, rightMotor);
 
 
 // from my testing, the minimum motor speed is about 80-90
 void setup() {
 
-  Serial.begin(460800);
+  Serial.begin(2000000);
   inputString.reserve(200);
+  // robot.forward(1);
+
 }
 
 long rightMotorOldPosition = -999;
@@ -61,7 +57,13 @@ long rightMotorNewPosition = robot.rightMotor.getPosition();
 
 
 void loop() {
-  robot.calculateAndUpdatePose();
+    // printMotorPositions();
+
+    // robot.turn(1)
+    robot.forwardCm(10);
+    // delay(3000);
+
+
 
   // if (stringComplete) {
   //   // Serial.println("string: " + inputString);
@@ -75,9 +77,8 @@ void loop() {
   //   // Serial.println(motorVelocity);
   // }
 
-  printMotorPositions();
   
-  robot.forward(1);
+
 
 
   // long leftMotorNewPosition = leftMotor.getPosition();
@@ -86,6 +87,8 @@ void loop() {
   //   Serial.println("left motor position: ");
   //   Serial.println(leftMotorNewPosition);
   // }
+  // wait 3000 ms
+  // delay(3000);
 }
 
 void printMotorPositions() {

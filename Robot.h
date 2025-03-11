@@ -4,40 +4,36 @@
 
 class Robot {
 public:
-  Robot(Motor leftMotor, Motor rightMotor, float initX, float initY, float initHeading);
-  float getX();
-  float getY();
-  float getHeading();
-  void turn(float speed);
-  void forward(float speed);
-  void turnRadians(float angle);
+  Robot(Motor leftMotor, Motor rightMotor);
+  void turn(double speed);
+  void forward(double speed);
+  void turnRadians(double angle);
   // distance in cm
-  void forwardCm(float distance);
-  void calculateAndUpdatePose();
+  void forwardCm(double distance);
+  void forwardSeconds(double time, double speed);
+  void calculateAndUpdatePose(double* axialOffset, double* lateralOffset, double* headingOffset);
   Motor rightMotor;
   Motor leftMotor;
 
 
 private:
   // counts for revolution for the encoder
-  static const int COUNTS_PER_REVOLUTION = 12*50; // CPR * gear ratio
+  static const double COUNTS_PER_REVOLUTION = 12.0*50.0; // CPR * gear ratio
   // wheel radius in cm
-  static const float WHEEL_RADIUS = 2;
-  float x;
-  float y;
-  float heading;
-  // cm
-  static const float AXIAL_TOLERANCE = 10;
+  static const double WHEEL_RADIUS = 2.0;
+  static const double TRACK_WIDTH = 11.0;
+  static const double RIGHT_MOTOR_SCALAR = 0.8;
+  double axialOffset;
+  double lateralOffset;
   // radians
-  static const float HEADING_TOLERANCE = 10*(3.14159265/180);
+  double headingOffset;
+  // cm
+  static const double AXIAL_TOLERANCE = 10.0;
+  // radians
+  static const double HEADING_TOLERANCE = 10.0*(3.14159265/180.0);
 
-  static const float KP = 0;
-  static const float KI = 0;
-  static const float KD = 0;
-
-
-  float initX;
-  float initY;
-  float initHeading;
+  static const double KP = 0.2;
+  static const double KI = 0.0;
+  static const double KD = 0.1;
 
 };

@@ -1,63 +1,95 @@
 #include "Robot.h"
+#include <PID_v1.h>
 
-Robot::Robot(Motor leftMotor, Motor rightMotor, float initX, float initY, float initHeading)
+
+Robot::Robot(Motor leftMotor, Motor rightMotor)
   : leftMotor(leftMotor), rightMotor(rightMotor) {
-
-    x = initX;
-    y = initY;
-    heading = initHeading;
-    
-
 }
 
-// velocity might be negative?
-void  Robot::turn(float speed) {
-  rightMotor.setVelocity(speed);
+// turn counter clockwise
+void Robot::turn(double speed) {
+  rightMotor.setVelocity(-speed);
   leftMotor.setVelocity(-speed);
 }
 
-void Robot::forward(float speed) {
-  rightMotor.setVelocity(speed);
+// TODO: UNFINISHED
+void Robot::turnRadians(double angle) {
+
+}
+
+void Robot::forward(double speed) {
+  rightMotor.setVelocity(-RIGHT_MOTOR_SCALAR*speed);
   leftMotor.setVelocity(speed);
 }
 
-// TODO: UNFINISHED
-void Robot::turnRadians(float angle) {
+void Robot::forwardCm(double distance) {
+  double axialOffset = 0;
+  double lateralOffset = 0;
+  double headingOffset = 0;
+  // double turnSpeed = 0;
+  double forwardSpeed = 0;
+  double setPoint = 0 + distance;
 
-}
 
-// TODO:UNFINISHED
-void Robot::forwardCm(float distance) {
-  float endPosition = x + distance;
-  float errorPrior = 0;
-  float integralPrior = 0;
-  float bias = 0;
+  PID axialPID(&axialOffset, &forwardSpeed, &setPoint, KP, KI, KD, DIRECT);
+  axialPID.SetMode(AUTOMATIC); // turn pid on
 
-  // x within bounds
-  while (x < endPosition + AXIAL_TOLERANCE && x > endPosition - AXIAL_TOLERANCE) {
-    float error = endPosition - x;
-    // float integral = integralPrior + error * 
+  while (true) {
+    calculateAndUpdatePose(&axialOffset, &lateralOffset, &headingOffset);
+    axialPID.Compute();
+    forward(forwardSpeed);
+    Serial.print("axialOffset:");
+    Serial.print(axialOffset);
+    Serial.print("forwardSpeed:");
+    Serial.println(forwardSpeed);
   }
+
+  
 }
+
+void Robot::forwardSeconds(double time, double speed) {
+  double startTime = millis();
+  while ((millis() - startTime) < time*1000) {
+    forward(speed);
+  }
+  forward(0);
+}
+
+// // TODO:UNFINISHED
+// void Robot::forwardCm(float distance) {
+//   float endPosition = x + distance;
+//   float errorPrior = 0;
+//   float integralPrior = 0;
+//   float bias = 0;
+//   float previousTime = millis();
+//   float currentTime = millis();
+
+//   // x within bounds
+//   while (x < endPosition + AXIAL_TOLERANCE && x > endPosition - AXIAL_TOLERANCE) {
+//     float error = endPosition - x;
+//     // float integral = integralPrior + error * 
+//   }
+// }
 
 // https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
-void Robot::calculateAndUpdatePose() {
-    long leftMotorPosition = leftMotor.getPosition();
+void Robot::calculateAndUpdatePose(double* axialOffset, double* lateralOffset, double* headingOffset) {
+    long leftMotorPosition = -leftMotor.getPosition();
     long rightMotorPosition = rightMotor.getPosition();
 
-    long leftNumberOfRevolutions = leftMotorPosition/this->COUNTS_PER_REVOLUTION;
-    long rightNumberOfRevolutions = rightMotorPosition/this->COUNTS_PER_REVOLUTION;
+    double leftNumberOfRevolutions = leftMotorPosition / this->COUNTS_PER_REVOLUTION;
+    double rightNumberOfRevolutions = rightMotorPosition / this->COUNTS_PER_REVOLUTION;
 
-    float leftDistanceTraveled = leftNumberOfRevolutions * 2 * 3.14159265 * this->WHEEL_RADIUS;
-    float rightDistanceTraveled = rightNumberOfRevolutions * 2 * 3.14159265 * this->WHEEL_RADIUS;
+    double leftDistanceTraveled = leftNumberOfRevolutions * 2.0 * 3.14159265 * this->WHEEL_RADIUS;
+    double rightDistanceTraveled = rightNumberOfRevolutions * 2.0 * 3.14159265 * this->WHEEL_RADIUS;
 
-    float averageDisplacement = (leftDistanceTraveled + rightDistanceTraveled) / 2; // cm
-    float deltaHeading = (leftDistanceTraveled - rightDistanceTraveled) / 2; // radians
+    double averageDisplacement = (leftDistanceTraveled + rightDistanceTraveled) / 2.0; // cm
+    double deltaHeading = (leftDistanceTraveled - rightDistanceTraveled) / this->TRACK_WIDTH; // radians
 
-    float deltaX = averageDisplacement * cos(deltaHeading);
-    float deltaY = averageDisplacement * sin(deltaHeading);
+    double deltaX = averageDisplacement * cos(deltaHeading);
+    double deltaY = averageDisplacement * sin(deltaHeading);
 
-    this->x = this->initX + deltaX;
-    this->y = this->initY + deltaY;
-    this->heading = this->initHeading + deltaHeading;    
+    *axialOffset = deltaX;
+    *lateralOffset = deltaY;
+    *headingOffset = deltaHeading;
 }
+
