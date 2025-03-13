@@ -1,22 +1,31 @@
-#pragma once
+#ifndef MOTOR_H
+#define MOTOR_H
+
+#include <Arduino.h>
 #include <Encoder.h>
 
 class Motor {
-public:
-  Motor(int encoderPinA, int encoderPinB, int pwmPin, int directionPin, int brakePin);
-  double getVelocity();
-  void setVelocity(double velocity);
-  int getPosition();
-  void updatePosition();
-
-
-
-private:
-  Encoder encoder;
-  double velocity = 0;
-  int PWM_PIN;
-  int DIRECTION_PIN;
-  int BRAKE_PIN;
-
-
+  private:
+    Encoder* encoder;
+    int pwmPin;
+    int dirPin;
+    int brakePin;
+    int currentSpeed;
+    long lastPosition;
+    unsigned long lastTime;
+    double velocity;
+    
+  public:
+    Motor(int encoderPinA, int encoderPinB, int pwmPin, int dirPin, int brakePin);
+    ~Motor();
+    
+    void init();
+    void setSpeed(int speed);  // -255 to 255
+    void stop();
+    long getEncoderPosition();
+    void resetEncoder();
+    double getVelocity();  // in encoder counts per second
+    void update();  // Update velocity calculation
 };
+
+#endif
