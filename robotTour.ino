@@ -28,17 +28,17 @@ void loop() {
   drive.forwardCm(30);
   delay(1000);
   
-  Serial.println("Turning 90 degrees");
-  drive.turnInPlace(90);
-  delay(1000);
+  // Serial.println("Turning 90 degrees");
+  // drive.turnInPlace(90);
+  // delay(1000);
   
-  Serial.println("Moving forward 20 cm");
-  drive.forwardCm(20);
-  delay(1000);
+  // Serial.println("Moving forward 20 cm");
+  // drive.forwardCm(20);
+  // delay(1000);
   
-  Serial.println("Turning -90 degrees");
-  drive.turnInPlace(-90);
-  delay(1000);
+  // Serial.println("Turning -90 degrees");
+  // drive.turnInPlace(-90);
+  // delay(1000);
   
   // Wait before repeating
   Serial.println("Waiting...");

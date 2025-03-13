@@ -1,5 +1,7 @@
 #include "Motor.h"
 
+/* This class */
+
 Motor::Motor(int encoderPinA, int encoderPinB, int pwmPin, int dirPin, int brakePin) {
   encoder = new Encoder(encoderPinA, encoderPinB);
   this->pwmPin = pwmPin;
@@ -53,6 +55,9 @@ void Motor::stop() {
   currentSpeed = 0;
 }
 
+/*
+return the encoder position (which is how many counts it has turned)
+*/
 long Motor::getEncoderPosition() {
   return encoder->read();
 }

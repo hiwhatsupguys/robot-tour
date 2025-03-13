@@ -1,6 +1,11 @@
 #include "DifferentialDrive.h"
 #include <math.h>
 
+/*this class setup all the functions we need to use in RobotTour.ino (ForwardCM and TurningInPlace with PID) and other functions needed to 
+accomplish those funtions like ConvertCountsToDistance, updatePosition, etc.*/
+
+//constructor: called when a new object is created
+//this is where we set the parameters of the robot (wheel radius, track width, etc)
 DifferentialDrive::DifferentialDrive(double countsPerRevolution, double wheelRadius, double trackWidth) {
   this->countsPerRevolution = countsPerRevolution;
   this->wheelRadius = wheelRadius;
@@ -11,12 +16,17 @@ DifferentialDrive::DifferentialDrive(double countsPerRevolution, double wheelRad
   y = 0;
   heading = 0;
   
-  // Default PID parameters
+  //might need to tunne these values
+  // Default PID parametersh
+  
+
   Kp = 2.0;
   Ki = 0.1;
   Kd = 0.5;
 }
 
+//destructor: called when the object is destroyed
+//this is where we free up any memory we allocated in the constructor
 DifferentialDrive::~DifferentialDrive() {
   delete leftMotor;
   delete rightMotor;
@@ -25,9 +35,11 @@ DifferentialDrive::~DifferentialDrive() {
   delete pidHeading;
 }
 
+//declare the pins for the motors and the encoders
 void DifferentialDrive::init(int leftEncoderPinA, int leftEncoderPinB, int leftPwmPin, int leftDirPin, int leftBrakePin,
                             int rightEncoderPinA, int rightEncoderPinB, int rightPwmPin, int rightDirPin, int rightBrakePin) {
-  // Initialize motors
+
+ // Initialize motors
   leftMotor = new Motor(leftEncoderPinA, leftEncoderPinB, leftPwmPin, leftDirPin, leftBrakePin);
   rightMotor = new Motor(rightEncoderPinA, rightEncoderPinB, rightPwmPin, rightDirPin, rightBrakePin);
   
@@ -64,6 +76,12 @@ void DifferentialDrive::init(int leftEncoderPinA, int leftEncoderPinB, int leftP
   resetPosition();
 }
 
+
+
+/*---------------------------real functions started here all above are init and declares----------------------------------*/
+
+
+// Set PID parameters
 void DifferentialDrive::setPIDParams(double Kp, double Ki, double Kd) {
   this->Kp = Kp;
   this->Ki = Ki;
@@ -74,10 +92,14 @@ void DifferentialDrive::setPIDParams(double Kp, double Ki, double Kd) {
   pidHeading->SetTunings(Kp, Ki, Kd);
 }
 
+/* 
+Convert encoder counts to distance in cm, used in the updatePosition function
+*/
 double DifferentialDrive::countsToDistance(long counts) {
   // Convert encoder counts to distance in cm
   return (2.0 * PI * wheelRadius * counts) / countsPerRevolution;
 }
+
 
 void DifferentialDrive::updatePosition() {
   // Get encoder positions
@@ -92,7 +114,7 @@ void DifferentialDrive::updatePosition() {
   double deltaHeading = (rightDistance - leftDistance) / trackWidth;
   heading += deltaHeading;
   
-  // Normalize heading to [-PI, PI]
+  // normalize the heading of car in to radians within pi and -pi
   while (heading > PI) heading -= 2 * PI;
   while (heading < -PI) heading += 2 * PI;
   
@@ -107,6 +129,7 @@ void DifferentialDrive::updatePosition() {
   leftMotor->update();
   rightMotor->update();
 }
+
 
 void DifferentialDrive::forwardCm(double distance) {
   // Reset encoders
@@ -131,7 +154,7 @@ void DifferentialDrive::forwardCm(double distance) {
   while (!reachedTarget) {
     // Update current position
     updatePosition();
-    
+
     // Update PID inputs
     pidInputX = x;
     pidInputY = y;
@@ -161,11 +184,12 @@ void DifferentialDrive::forwardCm(double distance) {
       break;
     }
   }
-  
+
   // Stop motors
   leftMotor->stop();
   rightMotor->stop();
 }
+
 
 void DifferentialDrive::turnInPlace(double degrees) {
   // Convert degrees to radians
@@ -238,6 +262,8 @@ void DifferentialDrive::turnInPlace(double degrees) {
   leftMotor->stop();
   rightMotor->stop();
 }
+
+
 
 double DifferentialDrive::getX() {
   return x;
