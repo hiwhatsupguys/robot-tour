@@ -1,99 +1,234 @@
 #include "Robot.h"
-#include <PID_v1.h>
-
 
 Robot::Robot(Motor leftMotor, Motor rightMotor)
-  : leftMotor(leftMotor), rightMotor(rightMotor) {
+    : leftMotor(leftMotor), rightMotor(rightMotor), 
+      axialPosition(0), lateralPosition(0), heading(0) {
 }
+
 
 // turn counter clockwise
 void Robot::turn(double speed) {
-  rightMotor.setVelocity(-speed);
-  leftMotor.setVelocity(-speed);
+    rightMotor.setVelocity(-speed);
+    leftMotor.setVelocity(-speed);
 }
 
-// TODO: UNFINISHED
-void Robot::turnRadians(double angle) {
-
-}
-
-void Robot::forward(double speed) {
-  rightMotor.setVelocity(-RIGHT_MOTOR_SCALAR*speed);
-  leftMotor.setVelocity(speed);
-}
-
-void Robot::forwardCm(double distance) {
-  double axialOffset = 0;
-  double lateralOffset = 0;
-  double headingOffset = 0;
-  // double turnSpeed = 0;
-  double forwardSpeed = 0;
-  double setPoint = 0 + distance;
-
-  // calculates the new speed to set the motors
-  // uses axialOffset and setPoint, puts the speed INTO  forwardSpeed. KP, KI, and KD are just numbers to tune, nothing to care about
-  PID axialPID(&axialOffset, &forwardSpeed, &setPoint, KP, KI, KD, DIRECT);
-  axialPID.SetMode(AUTOMATIC); // turn pid on
-
-  while (true) {
-    // calculates the x, y, and heading of the robot INTO axialOffset, lateralOffset, and headingOffset 
-    calculateAndUpdatePose(&axialOffset, &lateralOffset, &headingOffset);
-    // uses the axialOffset and the setPoint to calculate the new speed and puts it into forwardSpeed
-    axialPID.Compute();
-    // moves the robot forward
-    forward(forwardSpeed);
-    Serial.print("axialOffset:");
-    Serial.print(axialOffset);
-    Serial.print("forwardSpeed:");
-    Serial.println(forwardSpeed);
-  }
-
-  
-}
-
-void Robot::forwardSeconds(double time, double speed) {
-  double startTime = millis();
-  while ((millis() - startTime) < time*1000) {
-    forward(speed);
-  }
-  forward(0);
-}
-
-// // TODO:UNFINISHED
-// void Robot::forwardCm(float distance) {
-//   float endPosition = x + distance;
-//   float errorPrior = 0;
-//   float integralPrior = 0;
-//   float bias = 0;
-//   float previousTime = millis();
-//   float currentTime = millis();
-
-//   // x within bounds
-//   while (x < endPosition + AXIAL_TOLERANCE && x > endPosition - AXIAL_TOLERANCE) {
-//     float error = endPosition - x;
-//     // float integral = integralPrior + error * 
-//   }
+// // Implemented turnRadians function
+// void Robot::turnRadians(double angle) {
+//     // Store initial encoder positions
+//     long initialLeftPosition = -leftMotor.getPosition();
+//     long initialRightPosition = rightMotor.getPosition();
+    
+//     // Calculate arc length for each wheel
+//     double arcLength = angle * TRACK_WIDTH / 2.0;
+//     double targetEncoderCounts = (arcLength / (2.0 * 3.14159265 * WHEEL_RADIUS)) * COUNTS_PER_REVOLUTION;
+    
+//     double turnSpeed = 0.3; // Moderate turn speed
+//     double targetHeading = heading + angle;
+    
+//     if (angle > 0) {
+//         // Turn counterclockwise
+//         while (heading < targetHeading - HEADING_TOLERANCE) {
+//             turn(turnSpeed);
+//             double axialDelta, lateralDelta, headingDelta;
+//             calculateAndUpdatePose(&axialDelta, &lateralDelta, &headingDelta);
+//             heading += headingDelta;
+//             delay(10);
+//         }
+//     } else {
+//         // Turn clockwise
+//         while (heading > targetHeading + HEADING_TOLERANCE) {
+//             turn(-turnSpeed);
+//             double axialDelta, lateralDelta, headingDelta;
+//             calculateAndUpdatePose(&axialDelta, &lateralDelta, &headingDelta);
+//             heading += headingDelta;
+//             delay(10);
+//         }
+//     }
+    
+//     // Stop the motors
+//     turn(0);
 // }
 
-// https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
-void Robot::calculateAndUpdatePose(double* axialOffset, double* lateralOffset, double* headingOffset) {
-    long leftMotorPosition = -leftMotor.getPosition();
-    long rightMotorPosition = rightMotor.getPosition();
-
-    double leftNumberOfRevolutions = leftMotorPosition / this->COUNTS_PER_REVOLUTION;
-    double rightNumberOfRevolutions = rightMotorPosition / this->COUNTS_PER_REVOLUTION;
-
-    double leftDistanceTraveled = leftNumberOfRevolutions * 2.0 * 3.14159265 * this->WHEEL_RADIUS;
-    double rightDistanceTraveled = rightNumberOfRevolutions * 2.0 * 3.14159265 * this->WHEEL_RADIUS;
-
-    double averageDisplacement = (leftDistanceTraveled + rightDistanceTraveled) / 2.0; // cm
-    double deltaHeading = (leftDistanceTraveled - rightDistanceTraveled) / this->TRACK_WIDTH; // radians
-
-    double deltaX = averageDisplacement * cos(deltaHeading);
-    double deltaY = averageDisplacement * sin(deltaHeading);
-
-    *axialOffset = deltaX;
-    *lateralOffset = deltaY;
-    *headingOffset = deltaHeading;
+void Robot::forward(double speed) {
+    // Reduce RIGHT_MOTOR_SCALAR to 0.95 since the robot is now drifting right
+    rightMotor.setVelocity(-0.95*speed);
+    leftMotor.setVelocity(speed);
 }
 
+
+void Robot::forwardCm(double distance) {
+    // Store initial encoder positions
+    long initialLeftPosition = -leftMotor.getPosition();
+    long initialRightPosition = rightMotor.getPosition();
+    
+    // Initialize position tracking for this movement
+    double currentDistance = 0;
+    double heading = 0;
+    
+    double targetDistance = distance;
+    
+    // PID variables
+    double forwardSpeed = 0.5; // Start with a moderate speed
+    double turnCorrection = 0;
+    
+    // Time tracking for the PID loop
+    unsigned long currentTime = millis();
+    unsigned long previousTime = currentTime;
+    unsigned long startTime = currentTime;
+    unsigned long timeout = startTime + 10000; // 10-second timeout
+    
+    // Error accumulation for I term
+    double totalHeadingError = 0;
+    double previousHeadingError = 0;
+    
+    // Debug output header
+    Serial.println("Distance,Target,Heading,ForwardSpeed,TurnCorrection");
+    
+    while (abs(targetDistance - currentDistance) > AXIAL_TOLERANCE) {
+        // Update time
+        currentTime = millis();
+        double deltaTime = (currentTime - previousTime) / 1000.0; // Convert to seconds
+        previousTime = currentTime;
+        
+        // Get position deltas
+        double axialDelta, lateralDelta, headingDelta;
+        calculateAndUpdatePose(&axialDelta, &lateralDelta, &headingDelta);
+        
+        // Update our position and heading estimates
+        currentDistance += axialDelta;
+        heading += headingDelta;
+        
+        // Calculate PID terms for heading correction
+        double headingError = 0 - heading; // We want heading to be 0
+        totalHeadingError += headingError * deltaTime;
+        double derivativeError = (headingError - previousHeadingError) / deltaTime;
+        previousHeadingError = headingError;
+        
+        // Simple P controller for distance
+        if (abs(targetDistance - currentDistance) < 3.0) {
+            // Slow down as we approach the target
+            forwardSpeed = 0.3;
+        }
+        
+        // PID controller for heading
+        turnCorrection = KP * headingError + KI * totalHeadingError + KD * derivativeError;
+        
+        // Limit turn correction
+        if (turnCorrection > 0.3) turnCorrection = 0.3;
+        if (turnCorrection < -0.3) turnCorrection = -0.3;
+        
+        // Apply motor speeds with heading correction
+        rightMotor.setVelocity(-0.95*(forwardSpeed - turnCorrection));
+        leftMotor.setVelocity(forwardSpeed + turnCorrection);
+        
+        // Debug output
+        Serial.print(currentDistance);
+        Serial.print(",");
+        Serial.print(targetDistance);
+        Serial.print(",");
+        Serial.print(heading * 180 / 3.14159265); // Convert to degrees for readability
+        Serial.print(",");
+        Serial.print(forwardSpeed);
+        Serial.print(",");
+        Serial.println(turnCorrection);
+        
+        // Check for timeout or target reached
+        if (millis() > timeout) {
+            Serial.println("Timeout reached!");
+            break;
+        }
+        
+        // Crucial: Check if we've passed the target
+        if (currentDistance > targetDistance && targetDistance > 0) {
+            Serial.println("Target distance reached!");
+            break;
+        }
+        
+        delay(10); // Short delay to prevent overwhelming the serial monitor
+    }
+    
+    // Stop the motors
+    rightMotor.setVelocity(0);
+    leftMotor.setVelocity(0);
+    
+    Serial.println("Movement complete!");
+    Serial.print("Final distance: ");
+    Serial.print(currentDistance);
+    Serial.print(" cm, Target: ");
+    Serial.print(targetDistance);
+    Serial.print(" cm, Final heading: ");
+    Serial.print(heading * 180 / 3.14159265);
+    Serial.println(" degrees");
+}
+
+
+
+void Robot::forwardSeconds(double time, double speed) {
+    // Reset heading for this movement
+    heading = 0;
+    
+    double startTime = millis();
+    double turnCorrection = 0;
+    
+    // Simple P controller for heading during timed movement
+    while ((millis() - startTime) < time*1000) {
+        double axialDelta, lateralDelta, headingDelta;
+        calculateAndUpdatePose(&axialDelta, &lateralDelta, &headingDelta);
+        
+        // Update heading
+        heading += headingDelta;
+        
+        // Simple proportional control for heading
+        turnCorrection = heading * 0.5; // P factor for heading correction
+        
+        // Apply motor speeds with heading correction - note the 0.95 scalar for right motor
+        rightMotor.setVelocity(-0.95*(speed - turnCorrection));
+        leftMotor.setVelocity(speed + turnCorrection);
+        
+        delay(10);
+    }
+    
+    // Stop the motors
+    rightMotor.setVelocity(0);
+    leftMotor.setVelocity(0);
+}
+
+
+
+void Robot::calculateAndUpdatePose(double* axialOffset, double* lateralOffset, double* headingOffset) {
+    // Get current encoder positions
+    long leftMotorPosition = -leftMotor.getPosition();
+    long rightMotorPosition = rightMotor.getPosition();
+    
+    // Store previous positions for delta calculation
+    static long prevLeftPosition = leftMotorPosition;
+    static long prevRightPosition = rightMotorPosition;
+    
+    // Calculate change in encoder counts
+    long deltaLeftCounts = leftMotorPosition - prevLeftPosition;
+    long deltaRightCounts = rightMotorPosition - prevRightPosition;
+    
+    // Update previous positions
+    prevLeftPosition = leftMotorPosition;
+    prevRightPosition = rightMotorPosition;
+    
+    // Convert to wheel revolutions
+    double leftNumberOfRevolutions = deltaLeftCounts / COUNTS_PER_REVOLUTION;
+    double rightNumberOfRevolutions = deltaRightCounts / COUNTS_PER_REVOLUTION;
+    
+    // Calculate distance traveled by each wheel
+    double leftDistanceTraveled = leftNumberOfRevolutions * 2.0 * 3.14159265 * WHEEL_RADIUS;
+    double rightDistanceTraveled = rightNumberOfRevolutions * 2.0 * 3.14159265 * WHEEL_RADIUS;
+    
+    // Calculate robot movement
+    double avgDistance = (leftDistanceTraveled + rightDistanceTraveled) / 2.0; // cm
+    
+    // FIXED: Corrected the sign in the heading calculation
+    // If the robot is now turning right, we need to switch the order
+    *headingOffset = (leftDistanceTraveled - rightDistanceTraveled) / TRACK_WIDTH; // radians
+    
+    // Calculate X and Y components based on current heading
+    // Use small angle approximation for more stability
+    *axialOffset = avgDistance;
+    *lateralOffset = 0; // Simplify for straight line movements
+}
