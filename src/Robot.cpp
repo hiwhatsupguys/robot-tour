@@ -28,16 +28,15 @@ void Robot::forwardSeconds(double time, double speed) {
     forward(speed);
   }
   forward(0);
+    // for one second, do nothing
+    while ((millis() - startTime) < time*1000 + 1000) {
+      // do nothing
+    }
 }
 
 void Robot::turnLeft(double speed) {
-  rightMotor.setVelocity(RIGHT_MOTOR_SCALAR * speed);
-  leftMotor.setVelocity(-speed);
-}
-
-void Robot::turnRight(double speed) {
   rightMotor.setVelocity(-RIGHT_MOTOR_SCALAR * speed);
-  leftMotor.setVelocity(speed);
+  leftMotor.setVelocity(-speed);
 }
 
 void Robot::turnLeftSeconds(double time, double speed) {
@@ -46,6 +45,15 @@ void Robot::turnLeftSeconds(double time, double speed) {
       turnLeft(speed);
   }
   turnLeft(0); // Stop after turning
+  // for one second, do nothing
+  while ((millis() - startTime) < time*1000 + 1000) {
+    // do nothing
+  }
+}
+
+void Robot::turnRight(double speed) {
+  rightMotor.setVelocity(RIGHT_MOTOR_SCALAR * speed);
+  leftMotor.setVelocity(speed);
 }
 
 void Robot::turnRightSeconds(double time, double speed) {
@@ -53,8 +61,13 @@ void Robot::turnRightSeconds(double time, double speed) {
   while ((millis() - startTime) < time*1000) {
       turnRight(speed);
   }
-  turnRight(0); // Stop after turn
+  turnRight(0); // Stop after turning
+  while ((millis() - startTime) < time*1000 + 1000) {
+    // do nothing
 }
+}
+
+
 
 // void Robot::calculateAndUpdatePose(double* axialOffset, double* lateralOffset, double* headingOffset) {
 //     long leftMotorPosition = -leftMotor.getPosition();

@@ -2,13 +2,12 @@
 #include <Encoder.h>
 
 class Motor {
-public:
-  Motor(int encoderPinA, int encoderPinB, int pwmPin, int directionPin, int brakePin);
-  double getVelocity();
-  void setVelocity(double velocity);
-  int getPosition();
-  void updatePosition();
-
+    public:
+      Motor(int encoderPinA, int encoderPinB, int pwmPin, int directionPin, int brakePin);
+      double getVelocity();
+      void setVelocity(double velocity);
+      int getPosition();
+      void updatePosition();
 
 
 private:
@@ -17,6 +16,5 @@ private:
   int PWM_PIN;
   int DIRECTION_PIN;
   int BRAKE_PIN;
-
 
 };
