@@ -1,3 +1,27 @@
+// https://www.instructables.com/Arduino-Motor-Shield-Tutorial/
+// https://medium.com/@chrishio/basics-reading-dc-motor-encoder-values-with-arduino-2c185f3601ef
+// https://www.electroniclinic.com/arduino-dc-motor-speed-control-with-encoder-arduino-dc-motor-encoder/
+
+// controlling motor with encoder (helpful video):
+// https://www.youtube.com/watch?v=dTGITLnYAY0
+
+// https://docs.arduino.cc/tutorials/motor-shield-rev3/msr3-controlling-dc-motor/
+
+// MOTOR + ENCODER INFO:
+// https://www.pololu.com/file/0J1487/pololu-micro-metal-gearmotors-rev-6-1.pdf
+
+// ENCODER LIBRARY (doesn't work):
+// https://www.instructables.com/Motor-With-Encoder-How-to-Read-Input-Value-From-En/
+
+// current encoder code:
+// https://howtomechatronics.com/tutorials/arduino/rotary-encoder-works-use-arduino/
+
+// general differential drive robot code with odometry and stuff:
+// https://www.youtube.com/watch?v=337Sp3PtVDc
+
+// amazing source for calculating posistion and heading (odometry):
+// https://automaticaddison.com/calculating-wheel-odometry-for-a-differential-drive-robot/
+
 #include "Motor.h"
 #include "Robot.h"
 #include "math.h"
@@ -31,66 +55,59 @@ long leftMotorNewPosition = robot.leftMotor.getPosition();
 long rightMotorNewPosition = robot.rightMotor.getPosition();
 
 
-// Modify these global variables
-unsigned long lastPrintTime = 0;
-long lastLeftPosition = 0;
-long lastRightPosition = 0;
-const unsigned long PRINT_INTERVAL = 100; // 0.1 second interval
-
-// Add these global variables at the top
-const int WINDOW_SIZE = 5;  // Number of readings to average
-int32_t leftReadings[WINDOW_SIZE] = {0};
-int32_t rightReadings[WINDOW_SIZE] = {0};
-int readIndex = 0;
 
 void loop() {
-     printMotorPositions();
+    printMotorPositions();
 
+    // robot.turn(1)
+    
+    // delay(3000);
+
+
+
+  // if (stringComplete) {
+  //   // Serial.println("string: " + inputString);
+  //   float speed = inputString.toFloat();
+
+  //   robot.forward(speed);
+
+  //   inputString = "";
+  //   stringComplete = false;
+  //   // Serial.print("motor speed set to: ");
+  //   // Serial.println(motorVelocity);
+  // }
+
+  
+
+
+
+  // long leftMotorNewPosition = leftMotor.getPosition();
+  // if (leftMotorNewPosition != leftMotorOldPosition) {
+  //   leftMotorOldPosition = leftMotorNewPosition;
+  //   Serial.println("left motor position: ");
+  //   Serial.println(leftMotorNewPosition);
+  // }
+  // wait 3000 ms
+  // delay(3000);
 }
 
 void printMotorPositions() {
-  unsigned long currentTime = millis();
-  
-  if (currentTime - lastPrintTime >= PRINT_INTERVAL) {
-    leftMotorNewPosition = robot.leftMotor.getPosition();
-    rightMotorNewPosition = robot.rightMotor.getPosition();
 
-    // Calculate ticks per 0.1 second
-    int32_t leftTicks = 0;
-    int32_t rightTicks = 0;
-    
-    if (lastPrintTime > 0) {
-      leftTicks = (int32_t)(leftMotorNewPosition - lastLeftPosition);
-      rightTicks = (int32_t)(rightMotorNewPosition - lastRightPosition);
-      
-      // Store in circular buffer
-      leftReadings[readIndex] = leftTicks;
-      rightReadings[readIndex] = rightTicks;
-      readIndex = (readIndex + 1) % WINDOW_SIZE;
-      
-      // Calculate averages
-      int32_t leftAvg = 0;
-      int32_t rightAvg = 0;
-      for(int i = 0; i < WINDOW_SIZE; i++) {
-        leftAvg += leftReadings[i];
-        rightAvg += rightReadings[i];
-      }
-      leftAvg /= WINDOW_SIZE;
-      rightAvg /= WINDOW_SIZE;
-      
-      // Only print if there's significant movement
-      if(abs(leftAvg) > 0 || abs(rightAvg) > 0) {
-        Serial.print("L:");
-        Serial.print(leftAvg);
-        Serial.print(" R:");
-        Serial.println(rightAvg);
-      }
-    }
+  leftMotorNewPosition = robot.leftMotor.getPosition();
+  rightMotorNewPosition = robot.rightMotor.getPosition();
 
-    // Update last positions and time
-    lastLeftPosition = leftMotorNewPosition;
-    lastRightPosition = rightMotorNewPosition;
-    lastPrintTime = currentTime;
+  // printing encoder position
+  if (rightMotorNewPosition != rightMotorOldPosition
+   || leftMotorNewPosition != leftMotorOldPosition) {
+
+    rightMotorOldPosition = rightMotorNewPosition;
+    leftMotorOldPosition = leftMotorNewPosition;
+    Serial.print("right:");
+    Serial.print(rightMotorNewPosition);
+    Serial.print(",");
+    Serial.print("left:");
+    Serial.println(leftMotorNewPosition);
+
   }
 }
 
