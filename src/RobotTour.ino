@@ -8,10 +8,10 @@ bool stringComplete = false;
 // needs to be pins with interrupts, so pins 2 (digital) and 3 (analog) ?
 // setting this to 2 and 3 only allows 1, 0, -1 input
 
-// encoder pin a, encoder pin b, pwm pin, direction pin, brake pin
-Motor leftMotor(2, 6, 5, 12, 9);
-
-Motor rightMotor(3, 10, 11, 13, 8); 
+// encoder pin a, encoder pin b, m1Pin, m2Pin, vccPin, gndPin
+//only the first one really matter
+Motor leftMotor(2, 6, "5", "12", "9", "4");
+Motor rightMotor(3, 10, "11", "13", "8", "7");
 
 Robot robot(leftMotor, rightMotor);
 

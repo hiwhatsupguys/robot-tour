@@ -24,7 +24,7 @@ private:
   // wheel radius in cm
   static const double WHEEL_RADIUS = 2.0;
   static const double TRACK_WIDTH = 11.0;
-  static const double RIGHT_MOTOR_SCALAR = 1;
+  static const double RIGHT_MOTOR_SCALAR = 1.0;
   double axialOffset = 0.0;
   double lateralOffset = 0.0;
   // radians
