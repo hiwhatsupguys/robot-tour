@@ -43,6 +43,7 @@ Robot robot(leftMotor, rightMotor);
 // from my testing, the minimum motor speed is about 80-90
 void setup() {
 
+  // set baud rate to this number
   Serial.begin(2000000);
   inputString.reserve(200);
   // robot.forward(1);
@@ -60,9 +61,9 @@ void loop() {
     // printMotorPositions();
 
     // robot.turn(1)
-    robot.forwardCm(10);
-    // delay(3000);
-
+    // robot.forwardCm(4);
+    robot.forwardSeconds(1, 1);
+    delay(100000000);
 
 
   // if (stringComplete) {

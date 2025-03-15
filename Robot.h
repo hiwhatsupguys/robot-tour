@@ -32,8 +32,12 @@ private:
   // radians
   static const double HEADING_TOLERANCE = 10.0*(3.14159265/180.0);
 
-  static const double KP = 0.2;
-  static const double KI = 0.0;
-  static const double KD = 0.1;
+  static const double KP_AXIAL = 0.4;
+  static const double KI_AXIAL = 0.0;
+  static const double KD_AXIAL = 0.0;
+
+  static const double KP_LATERAL = 0.0;
+  static const double KI_LATERAL = 0.0;
+  static const double KD_LATERAL = 0.0;
 
 };

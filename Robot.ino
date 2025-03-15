@@ -28,11 +28,14 @@ void Robot::forwardCm(double distance) {
   double headingOffset = 0;
   // double turnSpeed = 0;
   double forwardSpeed = 0;
-  double setPoint = 0 + distance;
+  double lateralChange = 0;
+  double axialSetPoint = 0 + distance;
+  double lateralSetPoint = 0;
 
   // calculates the new speed to set the motors
   // uses axialOffset and setPoint, puts the speed INTO  forwardSpeed. KP, KI, and KD are just numbers to tune, nothing to care about
-  PID axialPID(&axialOffset, &forwardSpeed, &setPoint, KP, KI, KD, DIRECT);
+  PID axialPID(&axialOffset, &forwardSpeed, &axialSetPoint, KP_AXIAL, KI_AXIAL, KD_AXIAL, DIRECT);
+  // PID lateralPID(&lateralOffset, &lateralChange, &lateralSetPoint);
   axialPID.SetMode(AUTOMATIC); // turn pid on
 
   while (true) {
@@ -41,6 +44,7 @@ void Robot::forwardCm(double distance) {
     // uses the axialOffset and the setPoint to calculate the new speed and puts it into forwardSpeed
     axialPID.Compute();
     // moves the robot forward
+
     forward(forwardSpeed);
     Serial.print("axialOffset:");
     Serial.print(axialOffset);
@@ -57,6 +61,9 @@ void Robot::forwardSeconds(double time, double speed) {
     forward(speed);
   }
   forward(0);
+  while ((millis() - startTime) < time*1000 + 500) {
+    // do nothing
+  }
 }
 
 // // TODO:UNFINISHED
